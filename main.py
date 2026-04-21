@@ -599,12 +599,20 @@ class MainWindow(tk.Tk):
             self.iconify()
 
 
+def get_resource_path(relative_path):
+    # PyInstaller 创建临时文件夹，将路径存储在 _MEIPASS 中
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     # On Windows, prevent console window when frozen
     if sys.platform == "win32" and getattr(sys, 'frozen', False):
         import ctypes
         ctypes.windll.kernel32.FreeConsole()
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Carbide.Planner.0.1")
 
     app = MainWindow()
+    app.iconbitmap(get_resource_path('planner.ico'))
     app.mainloop()

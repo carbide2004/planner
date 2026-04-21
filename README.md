@@ -18,7 +18,7 @@ python main.py
 
 ```bash
 pip install pyinstaller
-pyinstaller --noconsole --onefile main.py
+pyinstaller --noconsole --onefile -i planner.ico --add-data "planner.ico;." main.py
 ```
 
 打包完成后 exe 在 `dist/main.exe`，可以重命名为 `DailyPlanner.exe`。

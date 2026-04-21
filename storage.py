@@ -1,6 +1,7 @@
 import json
 import sys, os
-from datetime import date
+from datetime import date, timedelta
+
 
 def get_base_dir():
     if getattr(sys, 'frozen', False):
@@ -11,13 +12,27 @@ def get_base_dir():
         return os.path.dirname(os.path.abspath(__file__))
 
 DATA_FILE = os.path.join(get_base_dir(), "data", f"{str(date.today())}.json")
+YESTERDAY_DATA_FILE = os.path.join(get_base_dir(), "data", f"{str(date.today() - timedelta(days=1))}.json")
 
 def _empty_day():
     return {"date": str(date.today()), "tasks": []}
 
+def _load_yesterday():
+    try:
+        with open(YESTERDAY_DATA_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if data.get("date") != str(date.today() - timedelta(days=1)):
+            return _empty_day()
+        data['tasks'] = [t for t in data['tasks'] if not t['done']]
+        return data
+    except Exception:
+        return _empty_day()
+
 def load_today():
     """Load today's tasks. If file missing or date mismatch, return empty."""
     if not os.path.exists(DATA_FILE):
+        if os.path.exists(YESTERDAY_DATA_FILE):
+            return _load_yesterday()
         return _empty_day()
     try:
         with open(DATA_FILE, "r", encoding="utf-8") as f:

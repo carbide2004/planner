@@ -24,6 +24,12 @@ RED         = "#ff4444"
 
 INTERVAL_SEC = 30 * 60        # default interval: 30 minutes
 
+def get_resource_path(relative_path):
+    # PyInstaller 创建临时文件夹，将路径存储在 _MEIPASS 中
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
 
 # ── Shared state ──────────────────────────────────────────────────────────────
 class AppState:
@@ -54,6 +60,7 @@ class ReminderWindow(tk.Toplevel):
         state.reminder_open = True
 
         self.title("⏰ 时间到了")
+        self.iconbitmap(get_resource_path('planner.ico'))
         self.configure(bg=BG)
         self.resizable(False, False)
 
@@ -143,6 +150,7 @@ class PlanWindow(tk.Toplevel):
         super().__init__(master)
         self.on_save = on_save
         self.title("今日计划")
+        self.iconbitmap(get_resource_path('planner.ico'))
         self.configure(bg=BG)
         self.resizable(False, False)
         self.grab_set()
@@ -241,6 +249,7 @@ class CustomIntervalWindow(tk.Toplevel):
         self.on_save = on_save
 
         self.title("自定义提醒间隔")
+        self.iconbitmap(get_resource_path('planner.ico'))
         self.configure(bg=BG)
         self.resizable(False, False)
         self.grab_set()
@@ -310,6 +319,7 @@ class MainWindow(tk.Tk):
         super().__init__()
         state.main_win = self
         self.title("Daily Planner")
+        self.iconbitmap(get_resource_path('planner.ico'))
         self.configure(bg=BG)
         self.geometry("460x580")
         self.minsize(400, 400)
@@ -598,13 +608,6 @@ class MainWindow(tk.Tk):
             # pystray not installed: just minimize
             self.iconify()
 
-
-def get_resource_path(relative_path):
-    # PyInstaller 创建临时文件夹，将路径存储在 _MEIPASS 中
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, relative_path)
-    return os.path.join(os.path.abspath("."), relative_path)
-
 # ── Entry point ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     # On Windows, prevent console window when frozen
@@ -614,5 +617,4 @@ if __name__ == "__main__":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Carbide.Planner.0.1")
 
     app = MainWindow()
-    app.iconbitmap(get_resource_path('planner.ico'))
     app.mainloop()

@@ -22,7 +22,7 @@ DONE_COLOR  = "#3a3a3a"
 DONE_TEXT   = "#4a4a4a"
 RED         = "#ff4444"
 
-INTERVAL_SEC = 30 * 60        # 30 minutes
+INTERVAL_SEC = 30 * 60        # default interval: 30 minutes
 
 
 # ── Shared state ──────────────────────────────────────────────────────────────
@@ -32,6 +32,7 @@ class AppState:
         self.timer = None
         self.main_win = None
         self.reminder_open = False
+        self.interval_sec = INTERVAL_SEC
 
 state = AppState()
 
@@ -233,6 +234,76 @@ class PlanWindow(tk.Toplevel):
         self.geometry(f"+{x}+{y}")
 
 
+# ── Custom Interval window ────────────────────────────────────────────────────
+class CustomIntervalWindow(tk.Toplevel):
+    def __init__(self, master, on_save):
+        super().__init__(master)
+        self.on_save = on_save
+
+        self.title("自定义提醒间隔")
+        self.configure(bg=BG)
+        self.resizable(False, False)
+        self.grab_set()
+        self.focus_force()
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
+
+        self._build()
+        self._center()
+
+    def _build(self):
+        body = tk.Frame(self, bg=BG, padx=24, pady=20)
+        body.pack(fill="both", expand=True)
+
+        tk.Label(body, text="设置提醒间隔（分钟）", font=("Microsoft YaHei", 11),
+                    bg=BG, fg=TEXT).pack(anchor="w", pady=(0, 10))
+
+        self.entry = tk.Entry(body, width=10, font=("Courier New", 12),
+                                bg=SURFACE, fg=TEXT, insertbackground=ACCENT,
+                                relief="flat", bd=0, justify="center")
+        self.entry.pack(pady=(0, 20))
+        self.entry.insert(0, str(state.interval_sec // 60))
+        self.entry.focus_set()
+        self.entry.select_range(0, 'end')
+
+        btn_row = tk.Frame(body, bg=BG)
+        btn_row.pack(fill="x")
+
+        tk.Button(btn_row, text="取消", font=("Microsoft YaHei", 10), bg=SURFACE2, fg=TEXT_DIM,
+                    activebackground=BORDER, activeforeground=TEXT, bd=0, padx=16, pady=8,
+                    cursor="hand2", command=self._on_close).pack(side="left")
+
+        tk.Button(btn_row, text="确定", font=("Microsoft YaHei", 10, "bold"), bg=ACCENT, fg="#0f0f0f",
+                    activebackground=ACCENT_DIM, activeforeground="#0f0f0f", bd=0, padx=20, pady=8,
+                    cursor="hand2", command=self._save).pack(side="right")
+
+    def _save(self):
+        try:
+            minutes = int(self.entry.get())
+            if minutes > 0 and minutes < 1440:
+                self.on_save(minutes * 60)
+                self._on_close()
+            else:
+                from tkinter import messagebox
+                messagebox.showwarning("输入无效", "间隔必须大于0分钟并小于24小时。", parent=self)
+        except ValueError:
+            from tkinter import messagebox
+            messagebox.showerror("输入无效", "请输入一个有效的数字（分钟）。", parent=self)
+
+    def _on_close(self):
+        self.grab_release()
+        self.destroy()
+
+    def _center(self):
+        self.update_idletasks()
+        w = self.winfo_width()
+        h = self.winfo_height()
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        self.geometry(f"+{x}+{y}")
+
+
 # ── Main window ───────────────────────────────────────────────────────────────
 class MainWindow(tk.Tk):
     def __init__(self):
@@ -326,6 +397,25 @@ class MainWindow(tk.Tk):
                                    bg=SURFACE, fg=TEXT_DIM, anchor="w")
         self.next_label.pack(side="left")
 
+        self.interval_menu_btn = tk.Menubutton(bottom, text="🕒",
+                                               font=("Segoe UI Emoji", 10),
+                                               bg=SURFACE, fg=TEXT_DIM,
+                                               activebackground=SURFACE2, activeforeground=TEXT,
+                                               bd=0, cursor="hand2", direction="above",
+                                               relief="flat")
+        self.interval_menu_btn.pack(side="left", padx=(8, 0))
+
+        menu = tk.Menu(self.interval_menu_btn, tearoff=0, bg=SURFACE, fg=TEXT,
+                       activebackground=ACCENT, activeforeground=BG,
+                       font=("Microsoft YaHei", 10))
+        self.interval_menu_btn["menu"] = menu
+
+        menu.add_command(label="15 分钟", command=lambda: self._set_interval(15 * 60))
+        menu.add_command(label="30 分钟", command=lambda: self._set_interval(30 * 60))
+        menu.add_command(label="1 小时", command=lambda: self._set_interval(60 * 60))
+        menu.add_separator(background=BORDER)
+        menu.add_command(label="自定义...", command=self._open_custom_interval_dialog)
+
         self.autostart_var = tk.BooleanVar(value=autostart.is_autostart_enabled())
         tk.Checkbutton(bottom, text="开机自启",
                        variable=self.autostart_var,
@@ -414,6 +504,18 @@ class MainWindow(tk.Tk):
                 break
         save_and_refresh()
 
+    # ── Interval control ──────────────────────────────────────────────────────
+    def _set_interval(self, seconds):
+        """设置提醒间隔并重新安排提醒。"""
+        state.interval_sec = seconds
+        # 注意：此实现不会将间隔时间保存到磁盘。
+        # 应用重启后会重置为默认值。
+        self._schedule_reminder()
+        self._update_countdown() # 立即更新倒计时显示
+
+    def _open_custom_interval_dialog(self):
+        CustomIntervalWindow(self, on_save=self._set_interval)
+
     # ── Countdown ─────────────────────────────────────────────────────────────
     def _update_countdown(self):
         if hasattr(self, '_next_reminder_time') and self._next_reminder_time:
@@ -424,10 +526,10 @@ class MainWindow(tk.Tk):
 
     # ── Reminder scheduling ───────────────────────────────────────────────────
     def _schedule_reminder(self):
-        self._next_reminder_time = time.time() + INTERVAL_SEC
+        self._next_reminder_time = time.time() + state.interval_sec
         if state.timer:
             state.timer.cancel()
-        state.timer = threading.Timer(INTERVAL_SEC, self._fire_reminder)
+        state.timer = threading.Timer(state.interval_sec, self._fire_reminder)
         state.timer.daemon = True
         state.timer.start()
 

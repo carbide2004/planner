@@ -86,7 +86,7 @@ class ReminderWindow(tk.Toplevel):
         tk.Label(body, text=now_str, font=("Courier New", 42, "bold"),
                  bg=BG, fg=ACCENT).pack(anchor="w")
 
-        tk.Label(body, text="三十分钟过去了。", font=("Microsoft YaHei", 13),
+        tk.Label(body, text=f"{state.interval_sec // 60}分钟过去了。", font=("Microsoft YaHei", 13),
                  bg=BG, fg=TEXT_DIM).pack(anchor="w", pady=(0, 20))
 
         # Pending tasks

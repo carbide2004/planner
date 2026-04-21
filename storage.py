@@ -10,7 +10,7 @@ def get_base_dir():
         # 开发时：脚本所在目录
         return os.path.dirname(os.path.abspath(__file__))
 
-DATA_FILE = os.path.join(get_base_dir(), "data", "today.json")
+DATA_FILE = os.path.join(get_base_dir(), "data", f"{str(date.today())}.json")
 
 def _empty_day():
     return {"date": str(date.today()), "tasks": []}

@@ -59,7 +59,7 @@ class ReminderWindow(tk.Toplevel):
         super().__init__(master)
         state.reminder_open = True
 
-        self.title("⏰ 时间到了")
+        self.title("时间到了")
         self.iconbitmap(get_resource_path('planner.ico'))
         self.configure(bg=BG)
         self.resizable(False, False)

@@ -8,6 +8,7 @@ from datetime import datetime
 
 import storage
 import autostart
+from single_instance import SingleInstance, SingleInstanceException
 
 # ── Palette ──────────────────────────────────────────────────────────────────
 BG          = "#0f0f0f"
@@ -610,6 +611,15 @@ class MainWindow(tk.Tk):
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    try:
+        # 锁定为单例。如果已有实例在运行，将抛出 SingleInstanceException。
+        instance_lock = SingleInstance()
+    except SingleInstanceException:
+        # 已有实例在运行，直接退出。
+        from tkinter import messagebox
+        messagebox.showerror(title="错误", message="已有实例正在运行")
+        sys.exit(0)
+
     # On Windows, prevent console window when frozen
     if sys.platform == "win32" and getattr(sys, 'frozen', False):
         import ctypes

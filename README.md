@@ -39,7 +39,9 @@ planner/
 ├── main.py        # 主程序
 ├── storage.py     # JSON 数据读写
 ├── autostart.py   # 注册表开机自启
+├── planner.ico    # 图标
+├── single_instance.py # 单例模式
 ├── requirements.txt
 └── data/
-    └── today.json # 当日计划（自动生成）
+    └── <datetime>.json # 当日计划（自动生成）
 ```

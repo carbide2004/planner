@@ -744,13 +744,7 @@ class MainWindow(tk.Tk):
         # Tray icon via pystray if available, else just stay hidden
         try:
             import pystray
-            from PIL import Image, ImageDraw
-
-            def make_icon():
-                img = Image.new("RGB", (64, 64), color=BG)
-                d = ImageDraw.Draw(img)
-                d.rectangle([8, 8, 56, 56], fill=ACCENT)
-                return img
+            from PIL import Image
 
             def show_window(icon, item):
                 icon.stop()
@@ -766,7 +760,8 @@ class MainWindow(tk.Tk):
                 pystray.MenuItem("打开", show_window, default=True),
                 pystray.MenuItem("退出", quit_app)
             )
-            icon = pystray.Icon("DailyPlanner", make_icon(), "Daily Planner", menu)
+            icon_image = Image.open(get_resource_path('planner.ico'))
+            icon = pystray.Icon("DailyPlanner", icon_image, "Daily Planner", menu)
             threading.Thread(target=icon.run, daemon=True).start()
         except ImportError:
             # pystray not installed: just minimize

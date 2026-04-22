@@ -46,7 +46,13 @@ state = AppState()
 
 # ── Utilities ─────────────────────────────────────────────────────────────────
 def make_task(text):
-    return {"id": int(time.time() * 1000), "text": text.strip(), "done": False}
+    return {
+        "id": int(time.time() * 1000), 
+        "text": text.strip(), 
+        "done": False,
+        "created_at": datetime.now().isoformat(),
+        "completed_at": None
+    }
 
 def save_and_refresh():
     storage.save_today(state.data)
@@ -214,13 +220,33 @@ class PlanWindow(tk.Toplevel):
             return
 
         from datetime import date
-        # Preserve done status for tasks with same text
-        old_map = {t["text"]: t["done"] for t in state.data["tasks"]}
+        # Preserve existing task details for tasks with same text
+        old_map = {t["text"]: t for t in state.data["tasks"]}
+        new_tasks = []
+        now_iso = datetime.now().isoformat()
+        
+        for i, l in enumerate(lines):
+            if l in old_map:
+                old_t = old_map[l]
+                new_tasks.append({
+                    "id": old_t.get("id", int(time.time()*1000 + i)),
+                    "text": l,
+                    "done": old_t.get("done", False),
+                    "created_at": old_t.get("created_at", now_iso),
+                    "completed_at": old_t.get("completed_at")
+                })
+            else:
+                new_tasks.append({
+                    "id": int(time.time()*1000 + i),
+                    "text": l,
+                    "done": False,
+                    "created_at": now_iso,
+                    "completed_at": None
+                })
+
         state.data = {
             "date": str(date.today()),
-            "tasks": [{"id": int(time.time()*1000 + i),
-                       "text": l,
-                       "done": old_map.get(l, False)} for i, l in enumerate(lines)]
+            "tasks": new_tasks
         }
         save_and_refresh()
         self.grab_release()
@@ -598,6 +624,7 @@ class MainWindow(tk.Tk):
         for t in state.data["tasks"]:
             if t["id"] == task["id"]:
                 t["done"] = not t["done"]
+                t["completed_at"] = datetime.now().isoformat() if t["done"] else None
                 break
         save_and_refresh()
 

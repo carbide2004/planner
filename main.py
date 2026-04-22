@@ -11,17 +11,39 @@ import autostart
 from single_instance import SingleInstance, SingleInstanceException
 
 # ── Palette ──────────────────────────────────────────────────────────────────
-BG          = "#0f0f0f"
-SURFACE     = "#1a1a1a"
-SURFACE2    = "#242424"
-BORDER      = "#2e2e2e"
-ACCENT      = "#c8f53a"        # sharp lime-yellow
-ACCENT_DIM  = "#8fb028"
-TEXT        = "#e8e8e8"
-TEXT_DIM    = "#666666"
-DONE_COLOR  = "#3a3a3a"
-DONE_TEXT   = "#4a4a4a"
-RED         = "#ff4444"
+THEMES = {
+    "dark": {
+        "BG": "#0f0f0f", "SURFACE": "#1a1a1a", "SURFACE2": "#242424",
+        "BORDER": "#2e2e2e", "ACCENT": "#c8f53a", "ACCENT_DIM": "#8fb028",
+        "TEXT": "#e8e8e8", "TEXT_DIM": "#666666",
+        "DONE_COLOR": "#3a3a3a", "DONE_TEXT": "#4a4a4a", "RED": "#ff4444"
+    },
+    "light": {
+        "BG": "#ffffff", "SURFACE": "#f5f5f5", "SURFACE2": "#e8e8e8",
+        "BORDER": "#d1d1d1", "ACCENT": "#22c55e", "ACCENT_DIM": "#16a34a",
+        "TEXT": "#171717", "TEXT_DIM": "#737373",
+        "DONE_COLOR": "#e5e5e5", "DONE_TEXT": "#a3a3a3", "RED": "#ef4444"
+    }
+}
+
+BG = SURFACE = SURFACE2 = BORDER = ACCENT = ACCENT_DIM = TEXT = TEXT_DIM = DONE_COLOR = DONE_TEXT = RED = ""
+
+def set_theme(theme_name):
+    global BG, SURFACE, SURFACE2, BORDER, ACCENT, ACCENT_DIM, TEXT, TEXT_DIM, DONE_COLOR, DONE_TEXT, RED
+    t = THEMES[theme_name]
+    BG = t["BG"]
+    SURFACE = t["SURFACE"]
+    SURFACE2 = t["SURFACE2"]
+    BORDER = t["BORDER"]
+    ACCENT = t["ACCENT"]
+    ACCENT_DIM = t["ACCENT_DIM"]
+    TEXT = t["TEXT"]
+    TEXT_DIM = t["TEXT_DIM"]
+    DONE_COLOR = t["DONE_COLOR"]
+    DONE_TEXT = t["DONE_TEXT"]
+    RED = t["RED"]
+
+set_theme("dark")
 
 INTERVAL_SEC = 30 * 60        # default interval: 30 minutes
 
@@ -40,6 +62,7 @@ class AppState:
         self.main_win = None
         self.reminder_open = False
         self.interval_sec = INTERVAL_SEC
+        self.theme = "dark"
 
 state = AppState()
 
@@ -426,7 +449,7 @@ class MainWindow(tk.Tk):
         self.title("Daily Planner")
         self.iconbitmap(get_resource_path('planner.ico'))
         self.configure(bg=BG)
-        self.geometry("460x580")
+        self.geometry("560x580")
         self.minsize(400, 400)
         self.resizable(True, True)
 
@@ -479,7 +502,16 @@ class MainWindow(tk.Tk):
                                   activebackground=BORDER, activeforeground=TEXT,
                                   bd=0, padx=12, pady=6, cursor="hand2",
                                   command=self._open_plan)
-        self.edit_btn.pack(side="left")
+        self.edit_btn.pack(side="left", padx=(0, 8))
+
+        theme_icon = "🌙" if state.theme == "dark" else "☀️"
+        self.theme_btn = tk.Button(right, text=theme_icon,
+                                   font=("Segoe UI Emoji", 10),
+                                   bg=SURFACE2, fg=TEXT_DIM,
+                                   activebackground=BORDER, activeforeground=TEXT,
+                                   bd=0, padx=12, pady=6, cursor="hand2",
+                                   command=self._toggle_theme)
+        self.theme_btn.pack(side="left")
 
         # Progress bar area
         self.progress_frame = tk.Frame(self, bg=BG, padx=24, pady=0)
@@ -642,11 +674,16 @@ class MainWindow(tk.Tk):
 
     # ── Countdown ─────────────────────────────────────────────────────────────
     def _update_countdown(self):
+        if hasattr(self, '_countdown_after_id'):
+            self.after_cancel(self._countdown_after_id)
+
         if hasattr(self, '_next_reminder_time') and self._next_reminder_time:
             remaining = max(0, int(self._next_reminder_time - time.time()))
             m, s = divmod(remaining, 60)
-            self.next_label.config(text=f"下次提醒 {m:02d}:{s:02d}")
-        self.after(1000, self._update_countdown)
+            if hasattr(self, 'next_label') and self.next_label.winfo_exists():
+                self.next_label.config(text=f"下次提醒 {m:02d}:{s:02d}")
+                
+        self._countdown_after_id = self.after(1000, self._update_countdown)
 
     # ── Reminder scheduling ───────────────────────────────────────────────────
     def _schedule_reminder(self):
@@ -672,6 +709,16 @@ class MainWindow(tk.Tk):
 
     def _open_summary(self):
         SummaryWindow(self)
+
+    # ── Theme control ─────────────────────────────────────────────────────────
+    def _toggle_theme(self):
+        state.theme = "light" if state.theme == "dark" else "dark"
+        set_theme(state.theme)
+        self.configure(bg=BG)
+        for w in self.winfo_children():
+            w.destroy()
+        self._build_ui()
+        self.refresh()
 
     # ── Canvas helpers ────────────────────────────────────────────────────────
     def _on_frame_configure(self, event):
@@ -700,9 +747,9 @@ class MainWindow(tk.Tk):
             from PIL import Image, ImageDraw
 
             def make_icon():
-                img = Image.new("RGB", (64, 64), color="#0f0f0f")
+                img = Image.new("RGB", (64, 64), color=BG)
                 d = ImageDraw.Draw(img)
-                d.rectangle([8, 8, 56, 56], fill="#c8f53a")
+                d.rectangle([8, 8, 56, 56], fill=ACCENT)
                 return img
 
             def show_window(icon, item):

@@ -54,3 +54,23 @@ def is_new_day():
 
 def get_pending_tasks(data):
     return [t for t in data["tasks"] if not t["done"]]
+
+def get_recent_stats(days=7):
+    stats = []
+    base_dir = os.path.join(get_base_dir(), "data")
+    for i in range(days - 1, -1, -1):
+        d = date.today() - timedelta(days=i)
+        file_path = os.path.join(base_dir, f"{str(d)}.json")
+        completed = 0
+        total = 0
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                tasks = data.get("tasks", [])
+                total = len(tasks)
+                completed = sum(1 for t in tasks if t.get("done", False))
+            except Exception:
+                pass
+        stats.append((d.strftime("%m-%d"), completed, total))
+    return stats

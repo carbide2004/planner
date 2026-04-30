@@ -10,11 +10,30 @@ def load_today():
     return state.data
 
 
+def ensure_current_day():
+    if state.data.get("date") != str(date.today()):
+        start_today()
+    return state.data
+
+
+def start_today():
+    data = storage.load_today()
+    if data.get("date") != str(date.today()):
+        data = {
+            "date": str(date.today()),
+            "tasks": data.get("tasks", []),
+        }
+        storage.save_today(data)
+    state.data = data
+    return state.data
+
+
 def save_today():
     storage.save_today(state.data)
 
 
 def replace_tasks_from_lines(lines):
+    ensure_current_day()
     old_tasks = state.data.get("tasks", [])
     old_map = {task["text"]: task for task in old_tasks}
     now_iso = datetime.now().isoformat()
@@ -36,6 +55,7 @@ def replace_tasks_from_lines(lines):
 
 
 def toggle_task(task_id):
+    ensure_current_day()
     for task in state.data.get("tasks", []):
         if task.get("id") == task_id:
             task["done"] = not task.get("done", False)

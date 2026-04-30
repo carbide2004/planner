@@ -1,6 +1,7 @@
 import threading
 import time
 import tkinter as tk
+from datetime import date
 
 from app import autostart, config, task_service
 from app.resources import get_resource_path
@@ -22,6 +23,7 @@ class MainWindow(tk.Tk):
         self.geometry(config.MAIN_WINDOW_GEOMETRY)
         self.minsize(*config.MAIN_WINDOW_MIN_SIZE)
         self.resizable(True, True)
+        self._current_date = date.today()
 
         # System tray / hide to taskbar on close
         self.protocol("WM_DELETE_WINDOW", self._hide)
@@ -35,6 +37,7 @@ class MainWindow(tk.Tk):
         # If new day, prompt plan input
         if task_service.is_new_day():
             self.after(400, self._open_plan)
+        self._schedule_day_rollover_check()
 
     # ── UI ────────────────────────────────────────────────────────────────────
     def _build_ui(self):
@@ -158,7 +161,7 @@ class MainWindow(tk.Tk):
         done_count = sum(1 for t in tasks if t["done"])
         total = len(tasks)
 
-        from datetime import date
+        self._current_date = date.today()
         self.date_label.config(text=date.today().strftime("%Y年%m月%d日  %A"))
 
         # Progress bar
@@ -268,6 +271,23 @@ class MainWindow(tk.Tk):
 
     def _show_reminder(self):
         ReminderWindow(self)
+
+    def _schedule_day_rollover_check(self):
+        self._day_rollover_after_id = self.after(
+            config.DAY_ROLLOVER_CHECK_MS,
+            self._check_day_rollover,
+        )
+
+    def _check_day_rollover(self):
+        today = date.today()
+        if today != self._current_date:
+            self._current_date = today
+            needs_plan = task_service.is_new_day()
+            task_service.start_today()
+            self.refresh()
+            if needs_plan:
+                self.after(400, self._open_plan)
+        self._schedule_day_rollover_check()
 
     # ── Plan editing ──────────────────────────────────────────────────────────
     def _open_plan(self):

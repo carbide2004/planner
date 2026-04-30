@@ -1,7 +1,7 @@
 import tkinter as tk
 
 from app import config
-from app import storage
+from app import task_service
 from app.resources import get_resource_path
 from app.ui import theme
 
@@ -34,7 +34,7 @@ class SummaryWindow(tk.Toplevel):
         canvas = tk.Canvas(body, width=c_width, height=c_height, bg=theme.SURFACE, bd=0, highlightthickness=0)
         canvas.pack(pady=(0, 20))
 
-        stats = storage.get_recent_stats(7)
+        stats = task_service.get_recent_stats(7)
         
         max_val = max((s[1] for s in stats), default=0)
         max_val = max(max_val, 5)  # 保证坐标系最少有个基础高度

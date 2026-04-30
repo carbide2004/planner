@@ -1,11 +1,10 @@
 import threading
 import time
 import tkinter as tk
-from datetime import datetime
 
-from app import autostart, config, storage
+from app import autostart, config, task_service
 from app.resources import get_resource_path
-from app.state import save_and_refresh, state
+from app.state import state
 from app.ui import theme
 from app.ui.interval_window import CustomIntervalWindow
 from app.ui.plan_window import PlanWindow
@@ -34,7 +33,7 @@ class MainWindow(tk.Tk):
         self._schedule_reminder()
 
         # If new day, prompt plan input
-        if storage.is_new_day():
+        if task_service.is_new_day():
             self.after(400, self._open_plan)
 
     # ── UI ────────────────────────────────────────────────────────────────────
@@ -154,7 +153,7 @@ class MainWindow(tk.Tk):
 
     # ── Refresh ───────────────────────────────────────────────────────────────
     def refresh(self):
-        state.data = storage.load_today()
+        state.data = task_service.load_today()
         tasks = state.data["tasks"]
         done_count = sum(1 for t in tasks if t["done"])
         total = len(tasks)
@@ -224,12 +223,8 @@ class MainWindow(tk.Tk):
             widget.configure(cursor="hand2")
 
     def _toggle_task(self, task):
-        for t in state.data["tasks"]:
-            if t["id"] == task["id"]:
-                t["done"] = not t["done"]
-                t["completed_at"] = datetime.now().isoformat() if t["done"] else None
-                break
-        save_and_refresh()
+        task_service.toggle_task(task["id"])
+        self.refresh()
 
     # ── Interval control ──────────────────────────────────────────────────────
     def _set_interval(self, seconds):

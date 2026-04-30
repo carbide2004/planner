@@ -2,7 +2,7 @@ import tkinter as tk
 from datetime import datetime
 
 from app import config
-from app import storage
+from app import task_service
 from app.resources import get_resource_path
 from app.state import state
 from app.ui import theme
@@ -43,7 +43,7 @@ class ReminderWindow(tk.Toplevel):
                  bg=theme.BG, fg=theme.TEXT_DIM).pack(anchor="w", pady=(0, 20))
 
         # Pending tasks
-        pending = storage.get_pending_tasks(state.data)
+        pending = task_service.get_pending_tasks(state.data)
 
         if not pending:
             tk.Label(body, text="✦ 今日任务已全部完成", font=("Microsoft YaHei", 12),

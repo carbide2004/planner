@@ -2,7 +2,7 @@
 
 ## structure
 
-- [ ] 重构代码减轻main.py内容
+- [x] 重构代码减轻main.py内容
 
 ## bugs
 

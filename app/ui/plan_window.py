@@ -1,10 +1,8 @@
 import tkinter as tk
-import time
-from datetime import datetime
 
-from app import config
+from app import config, task_service
 from app.resources import get_resource_path
-from app.state import save_and_refresh, state
+from app.state import state
 from app.ui import theme
 
 
@@ -75,36 +73,9 @@ class PlanWindow(tk.Toplevel):
         if not lines:
             return
 
-        from datetime import date
-        # Preserve existing task details for tasks with same text
-        old_map = {t["text"]: t for t in state.data["tasks"]}
-        new_tasks = []
-        now_iso = datetime.now().isoformat()
-        
-        for i, l in enumerate(lines):
-            if l in old_map:
-                old_t = old_map[l]
-                new_tasks.append({
-                    "id": old_t.get("id", int(time.time()*1000 + i)),
-                    "text": l,
-                    "done": old_t.get("done", False),
-                    "created_at": old_t.get("created_at", now_iso),
-                    "completed_at": old_t.get("completed_at")
-                })
-            else:
-                new_tasks.append({
-                    "id": int(time.time()*1000 + i),
-                    "text": l,
-                    "done": False,
-                    "created_at": now_iso,
-                    "completed_at": None
-                })
-
-        state.data = {
-            "date": str(date.today()),
-            "tasks": new_tasks
-        }
-        save_and_refresh()
+        task_service.replace_tasks_from_lines(lines)
+        if state.main_win and state.main_win.winfo_exists():
+            state.main_win.refresh()
         self.grab_release()
         self.destroy()
         if self.on_save:

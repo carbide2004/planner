@@ -1,3 +1,9 @@
+import os
+
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+
 APP_NAME = "DailyPlanner"
 APP_DISPLAY_NAME = "Daily Planner"
 APP_USER_MODEL_ID = "Carbide.Planner.0.1"

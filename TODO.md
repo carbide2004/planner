@@ -1,9 +1,14 @@
 # TODO list:
 
+## structure
+
+- [ ] 重构代码减轻main.py内容
+
 ## bugs
 
 - [x] 修复在右下角任务栏不显示ico图标的问题 
 - [x] 修复能多开实例的问题
+- [ ] 修复应用一直运行到第二天不会自动更新日期的问题
 
 ## future features
 

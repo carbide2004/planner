@@ -1,5 +1,7 @@
 import socket
 
+from app import config
+
 class SingleInstanceException(BaseException):
     """当应用的另一个实例已在运行时抛出此异常。"""
     pass
@@ -13,7 +15,7 @@ class SingleInstance:
 
     当对象被垃圾回收或进程退出时，套接字会自动关闭。
     """
-    def __init__(self, app_name="DailyPlanner"):
+    def __init__(self, app_name=config.APP_NAME):
         self.lock_socket = None
         # 根据应用名称生成一个唯一的端口号
         port_num = 50000 + sum(ord(c) for c in app_name) % 15000

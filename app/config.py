@@ -1,0 +1,10 @@
+APP_NAME = "DailyPlanner"
+APP_DISPLAY_NAME = "Daily Planner"
+APP_USER_MODEL_ID = "Carbide.Planner.0.1"
+
+ICON_FILENAME = "planner.ico"
+
+DEFAULT_INTERVAL_SEC = 30 * 60
+
+MAIN_WINDOW_GEOMETRY = "560x580"
+MAIN_WINDOW_MIN_SIZE = (400, 400)
